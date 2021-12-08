@@ -6,6 +6,9 @@ from scipy.integrate import solve_ivp
 import time
 import numpy as np
 
+# all function should be fine with any unit system
+# as long as get_V() etc are in the corresponding units
+
 
 def get_EOM_phi_aux(t, y, inf_model):
     '''
