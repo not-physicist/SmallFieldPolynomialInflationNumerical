@@ -36,19 +36,19 @@ def get_phi_dot_SL(phi, inf_model):
     '''
     rescaled phi dot in slow roll
     '''
-    return get_phi_dot_SL(phi, inf_model) / inf_model.get_phi0()
+    return get_phi_dot_SL_planck(phi, inf_model) / inf_model.get_phi0()
 
 
 def get_Hubble_SL(phi, inf_model):
     '''
     rescale Hubble parameter in slow-roll
     '''
-    return get_Hubble_SL(phi, inf_model) * inf_model.get_phi0()
+    return get_Hubble_SL_planck(phi, inf_model) * inf_model.get_phi0()
 
 
 def get_Hubble(phi, phi_dot, inf_model):
     '''
     rescale Hubble parameter, exact
     '''
-    return get_Hubble(phi, phi_dot, inf_model) * inf_model.get_phi0()
+    return get_Hubble_planck(phi, phi_dot, inf_model) * inf_model.get_phi0()
 ######################################################################

@@ -20,7 +20,7 @@ def get_EOM_phi_aux(t, y, inf_model):
 
     V = inf_model.get_V(phi)
     V_p = inf_model.get_V_p(phi)
-    H = gl.get_Hubble(phi, phi_dot, V)
+    H = gl.get_Hubble(phi, phi_dot, inf_model)
 
     dydt = [phi_dot, -3.0*H*phi_dot - V_p]
     return dydt

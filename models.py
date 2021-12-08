@@ -26,9 +26,9 @@ class SFPInf:
         self.__H0 = np.sqrt(V0/3)
 
         # rescaled parameters
-        self.b_re = self.__b / self.__H0**2
-        self.c_re = self.__c * phi0 / self.__H0**2
-        self.d_re = self.__d * phi0**2 / self.__H0**2
+        self.__b_re = self.__b / self.__H0**2
+        self.__c_re = self.__c * phi0 / self.__H0**2
+        self.__d_re = self.__d * phi0**2 / self.__H0**2
 
         # by default ODE parameters are not set
         self.__ODE_para_set = False
@@ -63,7 +63,8 @@ with the parameter:
         print("Original parameters: b=%2.2e M_pl^2, c=%2.2e M_pl, d=%2.2e"
               % (self.__b, self.__c, self.__d))
 
-    '''
+    #######################################################################
+    # in reduced planck unit
     def get_b(self):
         return self.__b
 
@@ -72,9 +73,6 @@ with the parameter:
 
     def get_d(self):
         return self.__d
-    '''
-    #######################################################################
-    # in reduced planck unit
     def get_phi0(self):
         return self.__phi0
 
@@ -113,7 +111,7 @@ with the parameter:
         # phi_i in units of phi0
         # t_max in units of H0
         self.__phi_i = self.get_phi_i()
-        self.__t_max = t_max / self.get_H_inf()
+        self.__t_max = t_max
         self.__N_t = int(N_t)
         self.__ODE_para_set = True
 
