@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+#  import matplotlib.pyplot as plt
 #  from numba import jit
 
 import globals as gl
@@ -10,10 +10,9 @@ import parameters as para
 import ODE
 import plot
 
-# TODO: change units; rescale equations
-# TODO: write a general class for potential
+# TODO: weird start for phi with phi0=3e-5, numerical stability?
 # TODO: find period for oscillations
-# TODO: allow git sync in ownCloud
+# TODO: write a general class for potential
 
 # change hardcoded limit of # of point
 # https://stackoverflow.com/questions/37470734/matplotlib-giving-error-overflowerror-in-draw-path-exceeded-cell-block-limit
@@ -30,9 +29,12 @@ except for the section for parameters of CosmoLattice
 '''
 
 
-def comp_ODE_para(phi0):
-    t_max = 10
-    N_t = 100 / phi0 + 1000
+def compute_ODE_para(phi0):
+    '''
+    compute parameters for ODE based on past experience
+    '''
+    t_max = 10**(3/2) * phi0**(3.0/8.0)
+    N_t = 100 / phi0 + 10000
     return t_max, N_t
 
 
@@ -66,26 +68,28 @@ if __name__ == "__main__":
         print("")
 
     np.savetxt("./data/N_tachy.dat", np.array([phi0_list, N_tachy_list]).T)
-
     plot_N_tachy()
     '''
-    # 1e0, 10, 1e3
-    # 1e-1, 10, 1e4
-    # 1e-2, 10, 1e5
-    # 1e-3, 5, 1e5
-    # 1e-4,
-    phi0 = 1.0e-4
+    solve_ODE_flag = True
+    phi0_array = np.array([1e0, 5e-1, 1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 3e-5])
+    N_tachy_array = np.zeros(phi0_array.shape[0])
+    for i in range(0, phi0_array.shape[0]):
+        phi0 = phi0_array[i]
 
-    SFPI = models.SFPInf(phi0)
-    #  SFPI.set_ODE(*comp_ODE_para(phi0))
-    SFPI.set_ODE(5, 1e7)
-    SFPI.print()
-    para.print_pr_para(SFPI)
+        SFPI = models.SFPInf(phi0)
+        SFPI.set_ODE(*compute_ODE_para(phi0))
+        SFPI.print()
+        para.print_pr_para(SFPI)
 
-    fn = "./data/phi-phi0=" + str(phi0) + ".dat"
-    ODE.solve_EOM_save2file(SFPI, fn)
-    t, phi, phi_dot = ODE.read_sol(fn)
-    plot.draw_phi_find_N_tachy(SFPI, t, phi)
-    plot.draw_para(SFPI, t, phi, phi_dot, xlims=(0, 3))
+        fn = "./data/phi-phi0=" + str(phi0) + ".dat"
+        if solve_ODE_flag:
+            ODE.solve_EOM_save2file(SFPI, fn)
+        t, phi, phi_dot = ODE.read_sol(fn)
+        plot.draw_phi_tachy_points(SFPI, t, phi)
+        #  plot.draw_para(SFPI, t, phi, phi_dot, xlims=(0, 3))
+        N_tachy_array[i] = plot.find_N_tachy(t, phi)
 
-    osci.find_period(t, phi)
+        osci.find_period(t, phi)
+
+    np.savetxt("./data/N_tachy.dat", np.array([phi0_array, N_tachy_array]).T)
+    plot.plot_N_tachy()

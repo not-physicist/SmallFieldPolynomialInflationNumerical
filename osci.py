@@ -32,3 +32,4 @@ def find_period(t, phi):
     T = 2 * np.diff(t[peaks])
     # peak to trough is only half period
     print("Periods of inflaton oscillation are", T)
+    print("Relative variance in periods", np.var(T)/np.mean(T)**2)
