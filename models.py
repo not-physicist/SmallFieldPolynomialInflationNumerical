@@ -17,18 +17,21 @@ class SFPInf:
         self.__d = phi0**2 * 6.61e-16
         self.__beta = phi0**4 * 9.73e-7
         self.__A = -8.0/3.0 * phi0
-        self.__c = -8*self.__d*self.__phi0/3
+        #  self.__c = self.__d * self.__A * (1 - self.__beta)
+        self.__c = -8 * self.__d * self.__phi0 / 3
         self.__b = 9.0/32*self.__c**2/self.__d
 
-        # H0 as new unit
+        # omega0 as new unit for time
         V0 = self.__d*(phi0**4 + self.__A*(1-self.__beta)*phi0**3
                        + 9/32.0*self.__A**2*phi0**2)
         self.__H0 = np.sqrt(V0/3)
+        self.__omega0 = self.__H0 / phi0
 
         # rescaled parameters
-        self.__b_re = self.__b / self.__H0**2
-        self.__c_re = self.__c * phi0 / self.__H0**2
-        self.__d_re = self.__d * phi0**2 / self.__H0**2
+        # c_re contains beta !!!
+        self.__b_re = self.__b / self.__omega0**2
+        self.__c_re = self.__c * (1 - self.__beta) * phi0 / self.__omega0**2
+        self.__d_re = self.__d * phi0**2 / self.__omega0**2
 
         # by default ODE parameters are not set
         self.__ODE_para_set = False
@@ -73,6 +76,7 @@ with the parameter:
 
     def get_d(self):
         return self.__d
+
     def get_phi0(self):
         return self.__phi0
 
@@ -80,19 +84,23 @@ with the parameter:
         # get scale of inflation
         return self.__H0
 
-    def get_V(self, phi):
-        # return inflaton potential
-        V = self.__b_re * phi**2 + self.__c_re * phi**3 + self.__d_re * phi**4
-        return V
     #######################################################################
 
     #######################################################################
-    # in phi0, H0 units
+    # in phi0, omega0 units
+    def get_V(self, phi):
+        # return inflaton potential
+        V = self.__b_re * phi**2 \
+            + self.__c_re * phi**3 \
+            + self.__d_re * phi**4
+        return V
+
     def get_V_p(self, phi):
+        #  phi0 = self.get_phi0()
         V_p = 2 * self.__b_re * phi \
             + 3 * self.__c_re * phi**2 \
             + 4 * self.__d_re * phi**3
-        #  print("%e" % V_p)
+        #  V_p /= (self.get_H_inf()**2 * self.get_phi0())
         return V_p
 
     def get_V_pp(self, phi):
@@ -109,7 +117,7 @@ with the parameter:
     def set_ODE(self, t_max, N_t):
         # set ODE parameters
         # phi_i in units of phi0
-        # t_max in units of H0
+        # t_max in units of omega0
         self.__phi_i = self.get_phi_i()
         self.__t_max = t_max
         self.__N_t = int(N_t)
