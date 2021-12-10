@@ -17,21 +17,29 @@ class SFPInf:
         self.__d = phi0**2 * 6.61e-16
         self.__beta = phi0**4 * 9.73e-7
         self.__A = -8.0/3.0 * phi0
-        #  self.__c = self.__d * self.__A * (1 - self.__beta)
-        self.__c = -8 * self.__d * self.__phi0 / 3
-        self.__b = 9.0/32*self.__c**2/self.__d
 
         # omega0 as new unit for time
         V0 = self.__d*(phi0**4 + self.__A*(1-self.__beta)*phi0**3
                        + 9/32.0*self.__A**2*phi0**2)
         self.__H0 = np.sqrt(V0/3)
+
+        # correction factor for H0
+        alpha = np.sqrt(3) / phi0**2 \
+            * np.sqrt(phi0**4
+                      + self.__A*(1-self.__beta)*phi0**3
+                      + 9/32 * self.__A**2 * phi0**2)
+        self.__H0 = 8.6e-9 * phi0**3 * alpha
         self.__omega0 = self.__H0 / phi0
+        #  print("omega0 = %e m_pl" % (self.__omega0))
 
         # rescaled parameters
         # c_re contains beta !!!
-        self.__b_re = self.__b / self.__omega0**2
-        self.__c_re = self.__c * (1 - self.__beta) * phi0 / self.__omega0**2
+        self.__b_re = self.__d * 9/32 * self.__A**2 / self.__omega0**2
+        self.__c_re = self.__d * self.__A \
+            * (1 - self.__beta) * phi0 / self.__omega0**2
         self.__d_re = self.__d * phi0**2 / self.__omega0**2
+        #  print("b_re = %.10f, c_re = %.10f, d_re = %.10f"
+              #  % (self.__b_re, self.__c_re, self.__d_re))
 
         # by default ODE parameters are not set
         self.__ODE_para_set = False
@@ -84,6 +92,9 @@ with the parameter:
         # get scale of inflation
         return self.__H0
 
+    def get_omega0(self):
+        return self.__omega0
+
     #######################################################################
 
     #######################################################################
@@ -96,11 +107,9 @@ with the parameter:
         return V
 
     def get_V_p(self, phi):
-        #  phi0 = self.get_phi0()
         V_p = 2 * self.__b_re * phi \
             + 3 * self.__c_re * phi**2 \
             + 4 * self.__d_re * phi**3
-        #  V_p /= (self.get_H_inf()**2 * self.get_phi0())
         return V_p
 
     def get_V_pp(self, phi):
@@ -110,9 +119,10 @@ with the parameter:
         return V_pp
 
     def get_phi_i(self):
-        # get phi at end of slow-roll inflation
-        # as initial field value
-        return (1-self.__phi0**2/24.0)
+        phi_end = (1-self.__phi0**2/24.0)  # end of slow roll
+        delta = 1 - phi_end  # difference between phi0 and phi_end
+        phi_i = phi_end + delta/2  # go back in time a bit
+        return phi_i
 
     def set_ODE(self, t_max, N_t):
         # set ODE parameters
