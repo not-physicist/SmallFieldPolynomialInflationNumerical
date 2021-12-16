@@ -18,6 +18,7 @@ def get_phi_dot_SL_planck(phi, inf_model):
     returns inflaton velocity with SL
     '''
     H = get_Hubble_SL(phi, inf_model)
+    #  print(inf_model.get_V_p(phi), phi)
     return -inf_model.get_V_p(phi)/(3.0*H)
 
 
@@ -31,7 +32,7 @@ def get_Hubble_planck(phi, phi_dot, inf_model):
 
 
 ######################################################################
-# in phi0, H0 planck unit
+# in phi0, omega0 planck unit
 def get_phi_dot_SL(phi, inf_model):
     '''
     rescaled phi dot in slow roll
@@ -52,3 +53,8 @@ def get_Hubble(phi, phi_dot, inf_model):
     '''
     return get_Hubble_planck(phi, phi_dot, inf_model) * inf_model.get_phi0()
 ######################################################################
+
+
+######################################################################
+def power_law(x, a, b):
+    return a * x**b
