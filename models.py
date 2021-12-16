@@ -18,26 +18,27 @@ class SFPInf:
         self.__beta = phi0**4 * 9.73e-7
         self.__A = -8.0/3.0 * phi0
 
-        # omega0 as new unit for time
+        # omegaStar as new unit for time
         V0 = self.__d*(phi0**4 + self.__A*(1-self.__beta)*phi0**3
                        + 9/32.0*self.__A**2*phi0**2)
         self.__H0 = np.sqrt(V0/3)
 
         # correction factor for H0
-        alpha = np.sqrt(3) / phi0**2 \
-            * np.sqrt(phi0**4
-                      + self.__A*(1-self.__beta)*phi0**3
-                      + 9/32 * self.__A**2 * phi0**2)
-        self.__H0 = 8.6e-9 * phi0**3 * alpha
-        self.__omega0 = self.__H0 / phi0
-        #  print("omega0 = %e m_pl" % (self.__omega0))
+        #  self.__alpha = np.sqrt(3) / phi0**2 \
+            #  * np.sqrt(phi0**4
+                      #  + self.__A*(1-self.__beta)*phi0**3
+                      #  + 9/32 * self.__A**2 * phi0**2)
+        self.__alpha = 1
+        self.__H0 = 8.6e-9 * phi0**3 * self.__alpha
+        self.__omegaStar = self.__H0 / phi0
+        #  print("omegaStar = %e m_pl" % (self.__omegaStar))
 
         # rescaled parameters
         # c_re contains beta !!!
-        self.__b_re = self.__d * 9/32 * self.__A**2 / self.__omega0**2
+        self.__b_re = self.__d * 9/32 * self.__A**2 / self.__omegaStar**2
         self.__c_re = self.__d * self.__A \
-            * (1 - self.__beta) * phi0 / self.__omega0**2
-        self.__d_re = self.__d * phi0**2 / self.__omega0**2
+            * (1 - self.__beta) * phi0 / self.__omegaStar**2
+        self.__d_re = self.__d * phi0**2 / self.__omegaStar**2
         #  print("b_re = %.10f, c_re = %.10f, d_re = %.10f"
               #  % (self.__b_re, self.__c_re, self.__d_re))
 
@@ -48,25 +49,21 @@ class SFPInf:
         # print parameter info
         if self.__ODE_para_set:
             print(
-'''
-Current inflation model:
+'''Current inflation model:
     Small Field Polynomial Inflation
 with the parameter:
     d = %2.2e, beta = %2.2e, phi0 = %2.2e /M_pl
-    phi_i=%e, t_max=%e, N_t=%e
-'''
+    phi_i=%e, t_max=%e, N_t=%e'''
                 %
                 (self.__d, self.__beta, self.__phi0, self.__phi_i,
                 self.__t_max/self.get_H_inf(), self.__N_t))
         else:
             print(
-'''
-Current inflation model:
+'''Current inflation model:
     Small Field Polynomial Inflation
 with the parameter:
     d = %2.2e, beta = %2.2e, phi0 = %2.2e /M_pl
-    ODE parameters not set
-'''
+    ODE parameters not set'''
                 %
                 (self.__d, self.__beta, self.__phi0, self.__phi_i))
 
@@ -92,13 +89,16 @@ with the parameter:
         # get scale of inflation
         return self.__H0
 
-    def get_omega0(self):
-        return self.__omega0
+    def get_omegaStar(self):
+        return self.__omegaStar
+
+    def get_alpha(self):
+        return self.__alpha
 
     #######################################################################
 
     #######################################################################
-    # in phi0, omega0 units
+    # in phi0, omegaStar units
     def get_V(self, phi):
         # return inflaton potential
         V = self.__b_re * phi**2 \
@@ -118,6 +118,9 @@ with the parameter:
             + 12 * self.__d_re * phi**2
         return V_pp
 
+    def get_phi_end(self):
+        return (1-self.__phi0**2/24.0)
+
     def get_phi_i(self):
         phi_end = (1-self.__phi0**2/24.0)  # end of slow roll
         delta = 1 - phi_end  # difference between phi0 and phi_end
@@ -127,7 +130,7 @@ with the parameter:
     def set_ODE(self, t_max, N_t):
         # set ODE parameters
         # phi_i in units of phi0
-        # t_max in units of omega0
+        # t_max in units of omegaStar
         self.__phi_i = self.get_phi_i()
         self.__t_max = t_max
         self.__N_t = int(N_t)
