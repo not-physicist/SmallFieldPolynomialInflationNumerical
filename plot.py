@@ -34,20 +34,28 @@ def draw_phi_tachy_points(inf_model, t, phi, xlims=False):
     returns number of times return to tachyonic region
     '''
     print("Plotting phi...")
-
-    #  H0 = inf_model.get_H_inf()
     phi0 = inf_model.get_phi0()
+    #  print(t, phi)
+    # using mask instead of setting xlims
+    # computationally cheaper
+    if xlims is not False:
+        mask = np.logical_and(t > xlims[0], t < xlims[1])
+        t_masked = t[mask]
+        phi_masked = phi[mask]
+    else:
+        t_masked = t
+        phi_masked = phi
 
-    plt.plot(t, phi)
-    plt.plot([t[0], t[-1]], [1/3, 1/3], linestyle="--", color="grey")
-    peaks_i = find_tachy_indices(t, phi)
-    plt.scatter(t[peaks_i], phi[peaks_i], color="red")
+    plt.plot(t_masked, phi_masked)
+    plt.plot([t_masked[0], t_masked[-1]], [1/3, 1/3],
+             linestyle="--", color="grey")
+    peaks_i = find_tachy_indices(t_masked, phi_masked)
+    plt.scatter(t_masked[peaks_i], phi_masked[peaks_i], color="red")
 
     plt.ylabel(r"$\phi / \phi_0$")
-    plt.xlabel(r"$t \cdot H_0$")
+    plt.xlabel(r"$t \cdot \omega_0$")
     plt.ylim(-0.5, 1.1)
-    if xlims is not False:
-        plt.xlim(*xlims)
+    #  plt.ylim(0.999, 1.001)
     plt.savefig("./figs/phi-phi0=" + str(phi0) + ".pdf", bbox_inches="tight")
     plt.close()
 
@@ -56,9 +64,14 @@ def find_tachy_indices(t, phi):
     '''
     find indices of peaks in tachyonic region
     '''
-    peaks, _ = find_peaks(phi, height=1/3)
     # _ is throwaway; find_peaks returns indices
-    return peaks
+    # due to machine precision, sometimes with small phi0,
+    #  the field can go up in the beginning
+    # To counter this: maximal height set to 1
+    peaks, _ = find_peaks(phi, height=[1/3, 1])
+
+    # get rid of last element, may not be a peak/trough
+    return peaks[:-1]
 
 
 def find_N_tachy(t, phi):
@@ -78,7 +91,7 @@ def draw_para(inf_model, t, phi, phi_dot, xlims=False):
     eps = para.get_SR_epsilon(phi, inf_model)
 
     # 1st hubble SR para
-    hubble = gl.get_Hubble(phi, phi_dot, inf_model.get_V(phi))
+    hubble = gl.get_Hubble(phi, phi_dot, inf_model)
     hubble_dot = np.diff(hubble)/np.diff(t)
     hubble_SR = para.get_Hubble_SR_para(hubble[:-1], hubble_dot)
 
@@ -98,17 +111,13 @@ def draw_para(inf_model, t, phi, phi_dot, xlims=False):
     '''
 
     plt.legend()
-    plt.xlabel(r"$t \cdot H_0$")
+    plt.xlabel(r"$t \cdot \omega_0$")
     plt.ylabel(r"parameters")
     plt.ylim(-2, 2)
     if xlims is not False:
         plt.xlim(*xlims)
     plt.savefig("./figs/para-phi0=" + str(phi0) + ".pdf", bbox_inches="tight")
     plt.close()
-
-
-def power_law(x, a, b):
-    return a * x**b
 
 
 def plot_N_tachy():
@@ -126,10 +135,10 @@ def plot_N_tachy():
 
     # plot and fit N_tachy
     plt.scatter(phi0_list, N_tachy_list, label="from ODEs' solutions")
-    popt, perr = curve_fit(power_law, phi0_list, N_tachy_list)
+    popt, perr = curve_fit(gl.power_law, phi0_list, N_tachy_list)
     fit_label = r"fit function $\log N = %.2f \log (\phi_0/m_{pl}) + (%.2f) $" % (popt[1], popt[0])
 
-    plt.plot(phi0_list, power_law(phi0_list, *popt), 'r-',
+    plt.plot(phi0_list, gl.power_law(phi0_list, *popt), 'r-',
              color="black", label=fit_label)
     plt.xscale("log")
     plt.yscale("log")
@@ -138,3 +147,34 @@ def plot_N_tachy():
     plt.legend()
     plt.savefig("./figs/N_tachy.pdf", bbox_inches="tight")
     plt.close()
+
+
+def find_1st_peak(t, phi):
+    """
+    return height of 1st peak in phi
+    """
+    peaks, _ = find_peaks(phi, height=[0, 1])
+    i = peaks[0]
+    return phi[i]
+
+
+def plot_1st_peaks():
+    data = np.genfromtxt("./data/peak_height.dat").T
+    phi0_array = data[0]
+    log_phi0_array = np.log10(data[0])
+    peak_height_array = data[1]
+    loss = 1 - data[1]
+
+    plt.scatter(phi0_array, loss, color="black")
+
+    popt, perr = curve_fit(gl.power_law, phi0_array, loss)
+    plt.plot(phi0_array, gl.power_law(phi0_array, *popt), '--', label="fit", color="black")
+
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel("$\phi_0$")
+    plt.ylabel("$1-\phi_{max}/\phi_0$")
+    plt.legend()
+
+    plt.savefig("./figs/1st_peaks.pdf", bbox_inches="tight")
+    np.savetxt("./data/1st_peaks_fit.dat", popt)
