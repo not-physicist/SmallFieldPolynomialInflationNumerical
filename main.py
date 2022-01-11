@@ -84,9 +84,9 @@ if __name__ == "__main__":
     np.savetxt("./data/peak_height.dat", np.array([phi0_array, peak_height_array]).T)
     plot.plot_1st_peaks()
     '''
-    flo.save_flo(100, 100)
-    flo.plot_flo("H0")
-    flo.plot_flo()
+    flo.save_flo(5, 128, 8, 1e6)
+    #  flo.plot_flo("H0")
+    #  flo.plot_flo()
 
     #  phi0 = 2.1049e-4
     #  SFPI = models.SFPInf(phi0)

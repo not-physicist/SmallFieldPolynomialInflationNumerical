@@ -6,6 +6,9 @@ from scipy.signal import find_peaks
 from scipy.integrate import solve_ivp
 from scipy.optimize import curve_fit
 import os
+#  import threading
+from multiprocessing import Process, Queue
+import time
 
 #  import ODE
 import models
@@ -93,7 +96,7 @@ def plot_1st_peaks():
     np.savetxt("./data/1st_peaks_fit.dat", popt)
 
 
-def solve_fund_matrix(k, inf_model, t0, t1, get_phi):
+def solve_fund_matrix(k, inf_model, t0, t1, get_phi, n_steps):
     def solve_fund_matrix_aux(t, y, k):
         fld = y[0]
         pi = y[1]
@@ -105,9 +108,9 @@ def solve_fund_matrix(k, inf_model, t0, t1, get_phi):
 
     T = t1 - t0  # in omega* unit, should be roughly 1
     sol1 = solve_ivp(lambda t, y: solve_fund_matrix_aux(t, y, k),
-                     [t0, t1], [1, 0], max_step=T/50000, method="DOP853")
+                     [t0, t1], [1, 0], max_step=T/n_steps, method="DOP853")
     sol2 = solve_ivp(lambda t, y: solve_fund_matrix_aux(t, y, k),
-                     [t0, t1], [0, 1], max_step=T/50000, method="DOP853")
+                     [t0, t1], [0, 1], max_step=T/n_steps, method="DOP853")
     #  print(sol1, sol2)
     fund_matrix = np.array([[sol1.y[0, -1], sol2.y[0, -1]],
                             [sol1.y[1, -1], sol2.y[1, -1]]])
@@ -121,18 +124,38 @@ def solve_fund_matrix(k, inf_model, t0, t1, get_phi):
     else:
         print(f"Dets at {k} are {det}")
 
-
     flo_coef = np.log(np.abs(eig))/T
     return flo_coef, det
 
 
-def compute_flo(inf_model, k_num):
+class computeFloProc(Process):
+    def __init__(self, ID, inf_model, k_i, k_e, k_num, n_steps, q):
+        Process.__init__(self)
+        self.ID = ID
+        self.inf_model = inf_model
+        self.k_i = k_i
+        self.k_e = k_e
+        self.k_num = k_num
+        self.n_steps = n_steps
+
+        self.q = q
+
+    def run(self):
+        print(f"Starting process {self.ID}")
+        result = compute_flo(self.inf_model,
+                             self.k_i, self.k_e,
+                             self.k_num, self.n_steps)
+        self.q.put(result)
+        print(f"Exiting process {self.ID}")
+
+
+def compute_flo(inf_model, k_i, k_e, k_num, n_steps):
     # get phi(t)
     t_range = [0, 20]
     popt = np.genfromtxt("./data/1st_peaks_fit.dat")
     phi_i = 1 - gl.power_law(inf_model.get_phi0(), *popt)
     sol = solve_ivp(lambda t, y: [y[1], -inf_model.get_V_p(y[0])],
-                    t_range, [phi_i, 0], max_step=t_range[1]/50000,
+                    t_range, [phi_i, 0], max_step=t_range[1]/n_steps,
                     method="DOP853")
     t = sol.t
     phi = sol.y[0]
@@ -159,11 +182,11 @@ def compute_flo(inf_model, k_num):
     '''
     m_min = np.sqrt(np.abs(inf_model.get_V_pp(2/3)))
     #  print(m_min)
-    k = np.linspace(0, 2, num=k_num)
+    k = np.linspace(k_i, k_e, num=k_num)
     R_mu = np.zeros(k.shape[0])
     det = np.zeros(k.shape[0])
     for i, k_i in enumerate(k):
-        coeffs, dets = solve_fund_matrix(k_i*m_min, inf_model, t0, t1, get_phi)
+        coeffs, dets = solve_fund_matrix(k_i*m_min, inf_model, t0, t1, get_phi, n_steps)
         #  print(f"Floquet coefficients at {k_i} are {coeffs}")
         #  print(f"Difference in Floquet coeff is {np.abs(coeffs[0] + coeffs[1])}")
 
@@ -174,11 +197,29 @@ def compute_flo(inf_model, k_num):
     #  plt.ylabel("$\Re{\mu}/\omega_*$")
     #  plt.xlabel("$k/m$")
     #  plt.show()
-    #  print(k, R_mu)
+    #  print(k, R_mu, det)
     return k, R_mu, det
 
 
-def save_flo(phi0_num, k_num):
+def save_flo(phi0_num, global_k_num, n_thread, n_steps):
+    global_k_i = 0
+    global_k_e = 2
+
+    if type(n_thread) != int:
+        print("Please give a valid value for n_thread!")
+        return ValueError
+    elif global_k_num % n_thread != 0:  # cannot divide into integer
+        print("Please give a nice value for n_thread!")
+        return ValueError
+    else:  # everything is fine
+        k_num = int(global_k_num / n_thread)
+
+        k_array = np.linspace(global_k_i, global_k_e, n_thread+1)
+        k_i_array = k_array[:-1]  # except last element
+        k_e_array = k_array[1:]  # except first element
+        print(k_i_array)
+        print(k_e_array)
+
     fn = "./data/floquent.dat"
     if os.path.exists(fn):
         os.remove(fn)
@@ -187,12 +228,45 @@ def save_flo(phi0_num, k_num):
     if os.path.exists(fn_det):
         os.remove(fn_det)
 
+    # check performance
+    start_t = time.perf_counter()
+
     with open(fn, 'ab') as f, open(fn_det, 'ab') as f_dets:
         phi0_array = np.logspace(0, -4, phi0_num, base=10)
         for i, phi0 in enumerate(phi0_array):
             print(f"phi0: {i+1} / {phi0_array.shape[0]}")
             SFPI = models.SFPInf(phi0)
-            k, flo, det = compute_flo(SFPI, k_num)
+
+            k = np.zeros(global_k_num)
+            flo = np.zeros(global_k_num)
+            det = np.zeros(global_k_num)
+
+            processes = []
+            queue = []
+
+            # create new processes and q's
+            for i in range(n_thread):
+                # queue used to store results
+                q = Queue()
+                queue.append(q)
+
+                proc = computeFloProc(f"Thread-{i+1}-phi0={phi0}", SFPI,
+                                      k_i_array[i], k_e_array[i],
+                                      k_num, n_steps, q)
+                processes.append(proc)
+
+            # start running function in processes
+            for proc in processes:
+                proc.start()
+
+            # wait for all processes to finish
+            for i, proc in enumerate(processes):
+                k_i, flo_i, det_i = queue[i].get()
+                proc.join()
+                k[i:i+k_num] = k_i
+                flo[i:i+k_num] = flo_i
+                det[i:i+k_num] = det_i
+
             np.savetxt(f, [flo])
             np.savetxt(f_dets, [det])
 
@@ -202,6 +276,9 @@ def save_flo(phi0_num, k_num):
 
     fn_phi0 = "./data/floquent_phi0.dat"
     np.savetxt(fn_phi0, phi0_array)
+
+    end_t = time.perf_counter()
+    print(f"\nExecution time: {end_t - start_t:0.3f} s")
 
 
 def plot_flo(unit="omega"):
