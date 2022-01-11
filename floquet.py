@@ -217,8 +217,9 @@ def save_flo(phi0_num, global_k_num, n_thread, n_steps):
         k_array = np.linspace(global_k_i, global_k_e, n_thread+1)
         k_i_array = k_array[:-1]  # except last element
         k_e_array = k_array[1:]  # except first element
-        print(k_i_array)
-        print(k_e_array)
+        #  print(k_array)
+        #  print(k_i_array)
+        #  print(k_e_array)
 
     fn = "./data/floquent.dat"
     if os.path.exists(fn):

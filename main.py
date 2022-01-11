@@ -84,7 +84,7 @@ if __name__ == "__main__":
     np.savetxt("./data/peak_height.dat", np.array([phi0_array, peak_height_array]).T)
     plot.plot_1st_peaks()
     '''
-    flo.save_flo(5, 128, 8, 1e6)
+    flo.save_flo(100, 128, 4, 7e4)
     #  flo.plot_flo("H0")
     #  flo.plot_flo()
 
