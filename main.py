@@ -4,14 +4,12 @@ import numpy as np
 
 import globals as gl
 import models
-import floquent as flo
+import floquet as flo
 import tachy
 import parameters as para
 import ODE
 import plot
 
-# TODO: new unit, put in into definition of constants
-#  MAKE BRANCHES for this
 # TODO: write a general class for potential
 
 # change hardcoded limit of # of point
@@ -39,6 +37,7 @@ def compute_ODE_para(phi0):
 
 
 if __name__ == "__main__":
+    '''
     solve_ODE_flag = False
 
     #  phi0_array = np.array([1e-4])
@@ -74,7 +73,7 @@ if __name__ == "__main__":
 
         flo.find_period(t, phi)
 
-        peak_height_array[i] = plot.find_1st_peak(t, phi)
+        peak_height_array[i] = flo.find_1st_peak(t, phi)
         print("height of first peak", peak_height_array[i])
 
         print("-----------------------------------------------------")
@@ -84,12 +83,11 @@ if __name__ == "__main__":
     plot.plot_N_tachy()
     np.savetxt("./data/peak_height.dat", np.array([phi0_array, peak_height_array]).T)
     plot.plot_1st_peaks()
-
-'''
-    # flo.save_flo()
+    '''
+    flo.save_flo(100, 100)
+    flo.plot_flo("H0")
     flo.plot_flo()
 
-    phi0 = 1e0
-    SFPI = models.SFPInf(phi0)
-    flo.compute_flo(SFPI)
-'''
+    #  phi0 = 2.1049e-4
+    #  SFPI = models.SFPInf(phi0)
+    #  flo.compute_flo(SFPI, 20)

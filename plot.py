@@ -147,34 +147,3 @@ def plot_N_tachy():
     plt.legend()
     plt.savefig("./figs/N_tachy.pdf", bbox_inches="tight")
     plt.close()
-
-
-def find_1st_peak(t, phi):
-    """
-    return height of 1st peak in phi
-    """
-    peaks, _ = find_peaks(phi, height=[0, 1])
-    i = peaks[0]
-    return phi[i]
-
-
-def plot_1st_peaks():
-    data = np.genfromtxt("./data/peak_height.dat").T
-    phi0_array = data[0]
-    log_phi0_array = np.log10(data[0])
-    peak_height_array = data[1]
-    loss = 1 - data[1]
-
-    plt.scatter(phi0_array, loss, color="black")
-
-    popt, perr = curve_fit(gl.power_law, phi0_array, loss)
-    plt.plot(phi0_array, gl.power_law(phi0_array, *popt), '--', label="fit", color="black")
-
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.xlabel("$\phi_0$")
-    plt.ylabel("$1-\phi_{max}/\phi_0$")
-    plt.legend()
-
-    plt.savefig("./figs/1st_peaks.pdf", bbox_inches="tight")
-    np.savetxt("./data/1st_peaks_fit.dat", popt)
