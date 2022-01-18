@@ -2,6 +2,7 @@ import numpy as np
 #  import matplotlib.pyplot as plt
 #  from numba import jit
 import sys
+import time
 
 import globals as gl
 import models
@@ -96,16 +97,23 @@ if __name__ == "__main__":
     t, phi, _ = ODE.read_sol(fn)
     plot.plot_eff_mass(t, phi, SFPI)
     '''
+
     try:
         n_proc = int(sys.argv[1])
-        print(f"Using {n_proc} CPU cores")
-        flo.save_flo(100, 128, n_proc, 7e4)
+        n_step = float(sys.argv[2])
+        print(f"Using {n_proc} CPU cores with {n_step} steps")
+        #  flo.save_flo(100, 128, n_proc, 5e4)
     except Exception:
         print("Error!")
 
     #  flo.plot_flo("H0")
     #  flo.plot_flo()
 
-    #  phi0 = 2.1049e-4
-    #  SFPI = models.SFPInf(phi0)
-    #  flo.compute_flo(SFPI, 20)
+    '''
+    start_t = time.perf_counter()
+    phi0 = 2.1049e-4
+    SFPI = models.SFPInf(phi0)
+    flo.compute_flo(SFPI, 0, 2, 20, 5e4)
+    end_t = time.perf_counter()
+    print(f"\nExecution time: {end_t - start_t:0.3f} s")
+    '''
