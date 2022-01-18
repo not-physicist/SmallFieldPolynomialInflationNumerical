@@ -102,7 +102,7 @@ if __name__ == "__main__":
         n_proc = int(sys.argv[1])
         n_step = float(sys.argv[2])
         print(f"Using {n_proc} CPU cores with {n_step} steps")
-        #  flo.save_flo(100, 128, n_proc, 5e4)
+        flo.save_flo(100, 128, n_proc, n_step)
     except Exception:
         print("Error!")
 
