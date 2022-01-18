@@ -36,12 +36,10 @@ def compute_ODE_para(phi0):
     return t_max, N_t
 
 
-if __name__ == "__main__":
-    '''
-    solve_ODE_flag = False
-
+def do_ODE_everything(flag=False):
     #  phi0_array = np.array([1e-4])
-    phi0_array = np.array([1e0, 5e-1, 1e-1, 5e-2, 1e-2, 5e-3, 1e-3, 5e-4, 1e-4, 3e-5])
+    phi0_array = np.array([1e0, 5e-1, 1e-1, 5e-2, 1e-2,
+                           5e-3, 1e-3, 5e-4, 1e-4, 3e-5])
     xlims_array = np.zeros((phi0_array.shape[0], 2))
     xlims_array[-1] = [0, 0.002]
 
@@ -58,7 +56,7 @@ if __name__ == "__main__":
         SFPI.print()
 
         fn = "./data/phi-phi0=" + str(phi0) + ".dat"
-        if solve_ODE_flag:
+        if flag:
             ODE.solve_EOM_save2file(SFPI, fn)
         t, phi, phi_dot = ODE.read_sol(fn)
 
@@ -82,8 +80,21 @@ if __name__ == "__main__":
     np.savetxt("./data/N_tachy.dat", np.array([phi0_array, N_tachy_array]).T)
     plot.plot_N_tachy()
     np.savetxt("./data/peak_height.dat", np.array([phi0_array, peak_height_array]).T)
-    plot.plot_1st_peaks()
+    flo.plot_1st_peaks()
+
+
+if __name__ == "__main__":
+    #  do_ODE_everything(flag=False)
+
     '''
+    phi0 = 1e-3
+    SFPI = models.SFPInf(phi0)
+
+    fn = "./data/phi-phi0=" + str(phi0) + ".dat"
+    t, phi, _ = ODE.read_sol(fn)
+    plot.plot_eff_mass(t, phi, SFPI)
+    '''
+
     flo.save_flo(100, 128, 4, 7e4)
     #  flo.plot_flo("H0")
     #  flo.plot_flo()

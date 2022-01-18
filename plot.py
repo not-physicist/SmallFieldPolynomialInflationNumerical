@@ -147,3 +147,11 @@ def plot_N_tachy():
     plt.legend()
     plt.savefig("./figs/N_tachy.pdf", bbox_inches="tight")
     plt.close()
+
+
+def plot_eff_mass(t, phi, inf_model):
+    eff_mass = inf_model.get_V_pp(phi)
+    plt.plot(t, eff_mass)
+    plt.xlabel(r"$t * \omega_*$")
+    plt.ylabel(r"$V'' / \omega_*$")
+    plt.show()

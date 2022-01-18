@@ -99,8 +99,8 @@ def print_pr_para(inf_model, phi, phi_dot):
     # initial field velocity
     phi_dot_end = getInitMom(inf_model, phi, phi_dot)
 
-    kUV = getKUV(inf_model, 8)
-    kIR = getKIR(inf_model, 8, 256)
+    kUV = getKUV(inf_model, 10)
+    kIR = getKIR(inf_model, 10, 256)
 
     print("phiStar = %1.10e GeV, omegaStar = %1.10e GeV, t_max = %e, dt = %e, init. mom. = %e GeV^2, alpha = %f"
           % (fStar*gl.m_pl, omegaStar*gl.m_pl, t_max, dt, phi_dot_end, inf_model.get_alpha()))

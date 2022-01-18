@@ -74,6 +74,9 @@ def find_1st_peak(t, phi):
 
 
 def plot_1st_peaks():
+    '''
+    plot 1st peak height against phi0 and save fit parameters
+    '''
     data = np.genfromtxt("./data/peak_height.dat").T
     phi0_array = data[0]
     #  log_phi0_array = np.log10(data[0])
@@ -201,20 +204,22 @@ def compute_flo(inf_model, k_i, k_e, k_num, n_steps):
     return k, R_mu, det
 
 
-def save_flo(phi0_num, global_k_num, n_thread, n_steps):
+def save_flo(phi0_num, global_k_num, n_proc, n_steps):
     global_k_i = 0
     global_k_e = 2
 
-    if type(n_thread) != int:
-        print("Please give a valid value for n_thread!")
+    # split different ranges of k to multiple processes
+    if type(n_proc) != int:
+        print("Please give a valid value for n_proc!")
         return ValueError
-    elif global_k_num % n_thread != 0:  # cannot divide into integer
-        print("Please give a nice value for n_thread!")
+    elif global_k_num % n_proc != 0:  # cannot divide into integer
+        print("Please give a nice value for n_proc!")
         return ValueError
     else:  # everything is fine
-        k_num = int(global_k_num / n_thread)
+        k_num = int(global_k_num / n_proc)
+        #  print(k_num)
 
-        k_array = np.linspace(global_k_i, global_k_e, n_thread+1)
+        k_array = np.linspace(global_k_i, global_k_e, n_proc+1)
         k_i_array = k_array[:-1]  # except last element
         k_e_array = k_array[1:]  # except first element
         #  print(k_array)
@@ -246,7 +251,7 @@ def save_flo(phi0_num, global_k_num, n_thread, n_steps):
             queue = []
 
             # create new processes and q's
-            for i in range(n_thread):
+            for i in range(n_proc):
                 # queue used to store results
                 q = Queue()
                 queue.append(q)
@@ -263,10 +268,11 @@ def save_flo(phi0_num, global_k_num, n_thread, n_steps):
             # wait for all processes to finish
             for i, proc in enumerate(processes):
                 k_i, flo_i, det_i = queue[i].get()
+                #  print(k_i)
                 proc.join()
-                k[i:i+k_num] = k_i
-                flo[i:i+k_num] = flo_i
-                det[i:i+k_num] = det_i
+                k[i*k_num:(i+1)*k_num] = k_i
+                flo[i*k_num:(i+1)*k_num] = flo_i
+                det[i*k_num:(i+1)*k_num] = det_i
 
             np.savetxt(f, [flo])
             np.savetxt(f_dets, [det])
