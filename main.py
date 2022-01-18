@@ -1,6 +1,7 @@
 import numpy as np
 #  import matplotlib.pyplot as plt
 #  from numba import jit
+import sys
 
 import globals as gl
 import models
@@ -84,6 +85,7 @@ def do_ODE_everything(flag=False):
 
 
 if __name__ == "__main__":
+
     #  do_ODE_everything(flag=False)
 
     '''
@@ -94,8 +96,13 @@ if __name__ == "__main__":
     t, phi, _ = ODE.read_sol(fn)
     plot.plot_eff_mass(t, phi, SFPI)
     '''
+    try:
+        n_proc = int(sys.argv[1])
+        print(f"Using {n_proc} CPU cores")
+        flo.save_flo(100, 128, n_proc, 7e4)
+    except Exception:
+        print("Error!")
 
-    flo.save_flo(100, 128, 4, 7e4)
     #  flo.plot_flo("H0")
     #  flo.plot_flo()
 
